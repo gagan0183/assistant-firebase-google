@@ -84,6 +84,22 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
     agent.add(conv);
   }
 
+  async function voteresults(agent) {
+    let voteResultsRef = admin.database().ref('artists').orderByChild('votes');
+
+    let results = [];
+    await voteResultsRef.once('value').then(snapshot => {
+      snapshot.forEach(childSnapshot => {
+        let value = childSnapshot.val();
+        results.push(value);
+      });
+    }).then(() => {
+      results.reverse();
+    });
+
+    agent.add('Vote results are process');
+  }
+
   // agent.add(`This message is from Dialogflow's Cloud Functions for Firebase editor!`);
   // agent.add(new Card({
   // 	title: `Title: this is a card title`,
@@ -131,6 +147,7 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   intentMap.set('Default Welcome Intent', welcome);
   intentMap.set('Default Fallback Intent', fallback);
   intentMap.set('music vote', musicvote);
+  intentMap.set('vote results', voteresults);
   // intentMap.set('your intent name here', yourFunctionHandler);
   // intentMap.set('your intent name here', googleAssistantHandler);
   agent.handleRequest(intentMap);
