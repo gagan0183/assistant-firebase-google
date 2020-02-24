@@ -7,7 +7,16 @@ const {WebhookClient} = require('dialogflow-fulfillment');
 const {Card, Suggestion} = require('dialogflow-fulfillment');
  
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
- 
+
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./config/sign-voice-firebase-adminsdk-jjf2z-2ad2682b60.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://sign-voice.firebaseio.com"
+});
+
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => {
   const agent = new WebhookClient({ request, response });
   console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
