@@ -33,7 +33,29 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   }
   
   function musicvote(agent) {
-    agent.add('Voting locally for ' + agent.parameters['Singer']);
+    let responseText = '';
+    let singer = agent.parameters['Singer'];
+    console.log('Singer ' + singer);
+    if (singer != null) {
+      let artistName = singer.replace(' ', '').toLowerCase();
+      let currentArtist = admin.database().ref().child('/artists/'+ artistName);
+      console.log('currentArtist', currentArtist);
+      currentArtist.once('value', function (snapshot) {
+        if (snapshot.exists() && snapshot.hasChild('votes')) {
+          let obj = snapshot.val();
+          console.log('obj', obj);
+          currentArtist.update({
+            votes: obj.votes + 1
+          });
+        } else {
+          currentArtist.set({
+            votes: 1
+          });
+        }
+      });
+      responseText = 'Thanks for voting';
+    }
+    agent.add(responseText);
   }
 
   // agent.add(`This message is from Dialogflow's Cloud Functions for Firebase editor!`);
