@@ -33,10 +33,13 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   }
   
   function musicvote(agent) {
+    let conv = agent.conv();
+    let endconvers = false;
     let responseText = '';
     let singer = agent.parameters['Singer'];
     console.log('Singer ' + singer);
-    if (singer != null) {
+    if (singer) {
+      console.log('in if');
       let artistName = singer.replace(' ', '').toLowerCase();
       let currentArtist = admin.database().ref().child('/artists/'+ artistName);
       console.log('currentArtist', currentArtist);
@@ -49,13 +52,36 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
           });
         } else {
           currentArtist.set({
-            votes: 1
+            votes: 1,
+            singer: singer
           });
         }
       });
       responseText = 'Thanks for voting';
+    } else {
+      console.log('in else');
+      if (conv.data.voteFallback === undefined) {
+        conv.data.voteFallback = 0;
+      }
+      conv.data.voteFallback++;
+      console.log(conv.data.voteFallback);
+      console.log('endconvers', endconvers);
+
+      if (conv.data.voteFallback > 2) {
+        responseText = 'Thanks for voting. Your vote was refuse. Please try later';
+        endconvers = true;
+      } else {
+        responseText = request.body.queryResult.fulfillmentText;
+      }
     }
-    agent.add(responseText);
+
+    console.log('responseText', responseText);
+    if (endconvers) {
+      conv.close(responseText);
+    } else {
+      conv.ask(responseText);
+    }
+    agent.add(conv);
   }
 
   // agent.add(`This message is from Dialogflow's Cloud Functions for Firebase editor!`);
